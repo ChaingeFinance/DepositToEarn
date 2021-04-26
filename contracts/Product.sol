@@ -55,12 +55,14 @@ contract Product is IProduct {
      _safeTransfer(token, from, address(this), amount, block.timestamp, depositEndTime);
 
     uint256 day = depositEndTime - block.timestamp / (24 * 3600);
-
-    uint256 interest = amount * ((1 + rate)  ** day -1) ;
+    
+    amount = amount * (10 **18);
+    uint256 interest = (amount * ((1 + rate)  ** day -1)) / (10 **18);
     _safeTransfer(token, cashbox, from, interest, depositEndTime, MAX_TIME);
 
     if(rewardCHNG !=0) {
-      uint256 rewardAmount = interest / rewardCHNG;
+      rewardCHNG = rewardCHNG * (10 **18);
+      uint256 rewardAmount = (interest / rewardCHNG) / (10 **18);
        _mintChng(cashbox, from, rewardAmount);
     }
   }
@@ -72,7 +74,7 @@ contract Product is IProduct {
 
   function _mintChng(address from, address _from, address _to, uint value) private {
     address chngToken = '';
-    (bool success, bytes memory data) = chngToken.call(abi.encodeWithSelector(SELECTOR, _from, _to, value));
+    (bool success, bytes memory data) = chngToken.call(abi.encodeWithSelector(SELECTOR1, _from, _to, value));
       require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mintChng_FAILED');
   }
 }
