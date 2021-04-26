@@ -35,7 +35,7 @@ contract Product is IProduct {
       factory = msg.sender;
   }
 
-  function initialize(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken address _owner ) public override {
+  function initialize(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) public override {
      rate = _rate;
      depositEndTime = _depositEndTime;
      token = _token;
