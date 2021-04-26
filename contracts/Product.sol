@@ -7,7 +7,7 @@ import "./IProduct.sol";
 
 contract Product is IProduct {
  
-  uint256 public rate; // 利率 如果是 
+  uint256 public rate;
 
   uint256 public depositEndTime;
 
@@ -17,14 +17,17 @@ contract Product is IProduct {
 
   address public factory;
 
-  uint256 public rewardCHNG;
+  uint256 public rewardRate;
 
   address public owner;
+
+  address public rewardToken;
 
   bytes4 private constant SELECTOR = bytes4(keccak256(bytes('timeSliceTransferFrom(address,address,uint256,uint256,uint256)')));
 
   bytes4 private constant SELECTOR1 = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
-	uint256 public constant MAX_TIME = 18446744073709551615;
+	
+  uint256 public constant MAX_TIME = 18446744073709551615;
 
   mapping (address=> uint256) balanceOf;
   
@@ -32,13 +35,14 @@ contract Product is IProduct {
       factory = msg.sender;
   }
 
-  function initialize(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardCHNG, address _owner ) public override {
+  function initialize(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken address _owner ) public override {
      rate = _rate;
      depositEndTime = _depositEndTime;
      token = _token;
      cashbox = _cashbox;
-     rewardCHNG = _rewardCHNG;
+     rewardRate = _rewardRate;
      owner = _owner;
+     rewardToken = _rewardToken;
   }
 
   function setRate(uint256 _rate) public override {
@@ -46,9 +50,9 @@ contract Product is IProduct {
       rate = _rate;
   }
 
-  function setRewardCHNG(uint256 _reward) public override {
+  function setRewardRate(uint256 _rewardRate) public override {
     require(msg.sender == owner);
-    rewardCHNG = _reward;
+    rewardRate = _rewardRate;
   }
 
   function deposit(address from, uint256 amount) public override { 
@@ -60,9 +64,9 @@ contract Product is IProduct {
     uint256 interest = (amount * ((1 + rate)  ** day -1)) / (10 **18);
     _safeTransfer(token, cashbox, from, interest, depositEndTime, MAX_TIME);
 
-    if(rewardCHNG !=0) {
-      rewardCHNG = rewardCHNG * (10 **18);
-      uint256 rewardAmount = (interest / rewardCHNG) / (10 **18);
+    if(rewardRate !=0) {
+      rewardRate = rewardRate * (10 **18);
+      uint256 rewardAmount = (interest / rewardRate) / (10 **18);
        _mintChng(cashbox, from, rewardAmount);
     }
   }
@@ -72,9 +76,8 @@ contract Product is IProduct {
       require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: TRANSFER_FAILED');
   }
 
-  function _mintChng(address from, address _from, address _to, uint value) private {
-    address chngToken = '';
-    (bool success, bytes memory data) = chngToken.call(abi.encodeWithSelector(SELECTOR1, _from, _to, value));
+  function _mintChng(address _from, address _to, uint value) private {
+    (bool success, bytes memory data) = rewardToken.call(abi.encodeWithSelector(SELECTOR1, _from, _to, value));
       require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mintChng_FAILED');
   }
 }

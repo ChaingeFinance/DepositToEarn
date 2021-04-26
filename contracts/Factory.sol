@@ -6,11 +6,11 @@ import './IProduct.sol';
 // import "@nomiclabs/buidler/console.sol";
 
 contract Factory{
-    function create(address token, uint256 rate, uint256 depositEndTime, address cashbox, uint256 _rewardCHNG, address owner ) public returns (address product) {
+    function create(address token, uint256 rate, uint256 depositEndTime, address cashbox, uint256 _rewardRate, address _rewardToken, address owner ) public returns (address product) {
         bytes memory bytecode = type(Product).creationCode;
         assembly {
             product := create(0, add(bytecode, 32), mload(bytecode))
         }
-        IProduct(product).initialize(token, rate, depositEndTime, cashbox, _rewardCHNG, owner);
+        IProduct(product).initialize(token, rate, depositEndTime, cashbox, _rewardRate, _rewardToken, owner);
     }
 }
