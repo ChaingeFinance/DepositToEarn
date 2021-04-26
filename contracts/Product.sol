@@ -51,15 +51,14 @@ contract Product is IProduct {
     rewardCHNG = _reward;
   }
 
-  function deposit(address from, uint256 amount) public override { // 接收充值的函数，用户将前段币转入次合约，合约将利息发放给用户。
-     _safeTransfer(token, from, address(this), amount, block.timestamp, depositEndTime); // 钱转入合约
+  function deposit(address from, uint256 amount) public override { 
+     _safeTransfer(token, from, address(this), amount, block.timestamp, depositEndTime);
 
     uint256 day = depositEndTime - block.timestamp / (24 * 3600);
-    // 合约为 用户发放收益
+
     uint256 interest = amount * ((1 + rate)  ** day -1) ;
     _safeTransfer(token, cashbox, from, interest, depositEndTime, MAX_TIME);
 
-    // 发放chng
     if(rewardCHNG !=0) {
       uint256 rewardAmount = interest / rewardCHNG;
        _mintChng(cashbox, from, rewardAmount);
