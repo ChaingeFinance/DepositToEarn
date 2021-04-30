@@ -64,7 +64,7 @@ contract Product is IProduct {
 
     if(rewardRate !=0) {
       uint256 rewardAmount = (interest / rewardRate) / (10 **18);
-       _mintChng(cashbox, from, rewardAmount);
+       _mintReward(cashbox, from, rewardAmount);
     }
   }
 
