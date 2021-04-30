@@ -31,9 +31,6 @@ contract Product is IProduct {
 
   mapping (address=> uint256) balanceOf;
   
-  // constructor() public {
-  //     factory = msg.sender;
-  // }
 
   constructor(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) public {
      rate = _rate;
@@ -46,12 +43,12 @@ contract Product is IProduct {
   }
 
   function setRate(uint256 _rate) public override {
-     require(msg.sender == owner);
+     require(msg.sender == owner, 'Product: Owner required');
       rate = _rate;
   }
 
   function setRewardRate(uint256 _rewardRate) public override {
-    require(msg.sender == owner);
+    require(msg.sender == owner, 'Product: Owner required');
     rewardRate = _rewardRate;
   }
 
@@ -73,11 +70,11 @@ contract Product is IProduct {
 
   function _safeTransfer(address _token, address _from, address _to, uint value, uint256 tokenStart, uint256 tokenEnd) private {
       (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(SELECTOR, _from, _to, value, tokenStart, tokenEnd));
-      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: TRANSFER_FAILED');
+      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: transfer failed');
   }
 
-  function _mintChng(address _from, address _to, uint value) private {
+  function _mintReward(address _from, address _to, uint value) private {
     (bool success, bytes memory data) = rewardToken.call(abi.encodeWithSelector(SELECTOR1, _from, _to, value));
-      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mintChng_FAILED');
+      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mint reward failed');
   }
 }

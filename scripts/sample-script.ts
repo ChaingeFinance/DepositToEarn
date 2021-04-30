@@ -14,8 +14,9 @@ async function main() {
   // await hre.run('compile');
 
   // We get the contract to deploy
-  const Factory = await hre.ethers.getContractFactory("Factory");
-  const factory = await Factory.deploy();
+  const Factory = await hre.ethers.getContractFactory("Product");
+  
+  const factory = await Factory.deploy('0x86469a2612453c270562eef67c9be54216148671', 111212121212121, 777777777, '0x86469a2612453c270562eef67c9be54216148671', 99988877, '0x86469a2612453c270562eef67c9be54216148671', '0x76ee3eeb7f5b708791a805cca590aead4777d378');
 
   await factory.deployed();
 
