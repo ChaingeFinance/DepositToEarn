@@ -58,14 +58,14 @@ contract Product is IProduct {
   function deposit(address from, uint256 amount) public override { 
      _safeTransfer(token, from, address(this), amount, block.timestamp, depositEndTime);
 
-    uint256 day = depositEndTime - block.timestamp / (24 * 3600);
+    uint256 day = (depositEndTime - block.timestamp) / (24 * 3600);
     
     amount = amount * (10 **18);
-    uint256 interest = (amount * ((1 + rate)  ** day -1)) / (10 **18);
-    _safeTransfer(token, cashbox, from, interest, depositEndTime, MAX_TIME);
+    uint256 interest = (amount * ((1 + rate)  ** day -1));
+    uint256 _interest = interest / (10 **18);
+    _safeTransfer(token, cashbox, from, _interest, depositEndTime, MAX_TIME);
 
     if(rewardRate !=0) {
-      rewardRate = rewardRate * (10 **18);
       uint256 rewardAmount = (interest / rewardRate) / (10 **18);
        _mintChng(cashbox, from, rewardAmount);
     }
