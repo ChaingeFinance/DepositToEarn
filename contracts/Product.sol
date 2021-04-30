@@ -31,11 +31,11 @@ contract Product is IProduct {
 
   mapping (address=> uint256) balanceOf;
   
-  constructor() public {
-      factory = msg.sender;
-  }
+  // constructor() public {
+  //     factory = msg.sender;
+  // }
 
-  function initialize(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) public override {
+  constructor(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) public {
      rate = _rate;
      depositEndTime = _depositEndTime;
      token = _token;
