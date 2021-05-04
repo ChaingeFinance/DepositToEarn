@@ -44,7 +44,7 @@ await exampleToken.mint(owner.address, amount);
 
   await sleep()
   
-  const product = await Product.deploy(exampleToken.address, "317380671044747", "1651730400", owner.address, "160000000000000000", '0x3ed8997bace69bfe5b729997518b70d342b4c7a5', '0xdf1FAcbC27E16F2189E35eb652564502e75Ebf77');
+  const product = await Product.deploy(exampleToken.address, "317380671044747", "1651730400", owner.address, "160000000000000000", exampleToken.address, '0xdf1FAcbC27E16F2189E35eb652564502e75Ebf77');
 
   await product.deployed();
 
@@ -58,7 +58,7 @@ await exampleToken.mint(owner.address, amount);
   console.log("approve success!");
   await sleep()
 
-  await product.deposit(owner.address, 1)
+  await product.deposit(owner.address, '1000000000000000000000')
 
 
   /*

@@ -53,39 +53,22 @@ contract Product is IProduct {
   }
 
   function deposit(address from, uint256 amount) public override { 
+
      _safeTransfer(from, address(this), amount, block.timestamp, 666666666666);
+
     uint256 day = (depositEndTime - block.timestamp) / (24 * 3600);
-    // uint256 interest = (amount * ((1 + rate)  ** day -1) -1) / 10 ** (18 * day);
-    // uint256 _interest = interest;
-
-    // uint256 interest = 0;
-
-    // uint256 _days = day;
-
-    // uint256 min_day = 6;
-    // if(day <= 5) {
-    //     min_day = day;
-    // }
-
-    // for(uint256 i = 2; i < min_day; i++) {
-    //       uint256 ii = 1;
-    //       for(uint256 j = i; j > 1; j--) {
-    //           ii =  ii  * j;
-    //       }
-    //       _days = _days * (day - i + 1);
-    //       interest += _days / ii * (rate ** i) / (10 ** ((i-1)*18)); 
-    //       console.log(ii, _days, interest);
-    // }
-
-    // interest += day * rate;
 
     uint256 interest = getInterest(day, rate);
-    uint256 interestAmount = interest * amount;
+
+    uint256 interestAmount = interest * amount / (10**18);
+
+    console.log('interestAmount', interest, interestAmount);
+
     _safeTransfer(cashbox, from, interestAmount, depositEndTime, MAX_TIME);
 
     if(rewardRate !=0) {
-      uint256 rewardInterest = getInterest(day, rewardRate);
-      uint256 rewardAmount = interestAmount * rewardInterest;
+      uint256 rewardAmount = interestAmount / rewardRate * (10**18);
+       console.log('rewardAmount', rewardAmount, cashbox, from);
        _mintReward(cashbox, from, rewardAmount);
     }
   }
@@ -119,7 +102,8 @@ contract Product is IProduct {
   }
 
   function _mintReward(address _from, address _to, uint value) private {
-    (bool success, bytes memory data) = rewardToken.call(abi.encodeWithSelector(SELECTOR1, _from, _to, value));
+    (bool success, bytes memory data) = rewardToken.call(abi.encodeWithSelector(SELECTOR, _from, _to, value , 0 , 66666666666));
+      // console.log('reward', success);
       require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mint reward failed');
   }
 }
