@@ -53,23 +53,68 @@ contract Product is IProduct {
   }
 
   function deposit(address from, uint256 amount) public override { 
-     _safeTransfer(token, from, address(this), amount, block.timestamp, depositEndTime);
-
+     _safeTransfer(from, address(this), amount, block.timestamp, 666666666666);
     uint256 day = (depositEndTime - block.timestamp) / (24 * 3600);
-    
-    amount = amount * (10 **18);
-    uint256 interest = (amount * ((1 + rate)  ** day -1));
-    uint256 _interest = interest / (10 **18);
-    _safeTransfer(token, cashbox, from, _interest, depositEndTime, MAX_TIME);
+    // uint256 interest = (amount * ((1 + rate)  ** day -1) -1) / 10 ** (18 * day);
+    // uint256 _interest = interest;
+
+    // uint256 interest = 0;
+
+    // uint256 _days = day;
+
+    // uint256 min_day = 6;
+    // if(day <= 5) {
+    //     min_day = day;
+    // }
+
+    // for(uint256 i = 2; i < min_day; i++) {
+    //       uint256 ii = 1;
+    //       for(uint256 j = i; j > 1; j--) {
+    //           ii =  ii  * j;
+    //       }
+    //       _days = _days * (day - i + 1);
+    //       interest += _days / ii * (rate ** i) / (10 ** ((i-1)*18)); 
+    //       console.log(ii, _days, interest);
+    // }
+
+    // interest += day * rate;
+
+    uint256 interest = getInterest(day, rate);
+    uint256 interestAmount = interest * amount;
+    _safeTransfer(cashbox, from, interestAmount, depositEndTime, MAX_TIME);
 
     if(rewardRate !=0) {
-      uint256 rewardAmount = (interest / rewardRate) / (10 **18);
+      uint256 rewardInterest = getInterest(day, rewardRate);
+      uint256 rewardAmount = interestAmount * rewardInterest;
        _mintReward(cashbox, from, rewardAmount);
     }
   }
 
-  function _safeTransfer(address _token, address _from, address _to, uint value, uint256 tokenStart, uint256 tokenEnd) private {
-      (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(SELECTOR, _from, _to, value, tokenStart, tokenEnd));
+  function getInterest(uint256 day, uint256 rate) internal returns(uint256)  {
+
+      uint256 interest = 0;
+      uint256 _days = day;
+      uint256 min_day = 6;
+
+      if(day <= 5) {
+          min_day = day;
+      }
+
+      for(uint256 i = 2; i < min_day; i++) {
+            uint256 ii = 1;
+            for(uint256 j = i; j > 1; j--) {
+                ii =  ii  * (j);
+            }
+            _days = _days * (day - i + 1);
+            interest += _days / ii * (rate ** i) / (10 ** ((i-1)*18)); 
+      }
+
+      interest += day * rate;
+      return interest;
+  }
+
+  function _safeTransfer(address _from, address _to, uint value, uint256 tokenStart, uint256 tokenEnd) private {
+      (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, _from, _to, value, tokenStart, tokenEnd));
       require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: transfer failed');
   }
 
