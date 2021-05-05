@@ -6,33 +6,22 @@ import "hardhat/console.sol";
 import "./IProduct.sol";
 
 contract Product is IProduct {
- 
   uint256 public rate;
-
   uint256 public depositEndTime;
-
   address public token;
-
   address public cashbox;
-
-  address public factory;
-
   uint256 public rewardRate;
-
   address public owner;
-
   address public rewardToken;
+  
+  bytes4 private constant SLICE_SELECTOR = bytes4(keccak256(bytes('timeSliceTransferFrom(address,address,uint256,uint256,uint256)')));
+  bytes4 private constant FULL_SELECTOR = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
 
-  bytes4 private constant SELECTOR = bytes4(keccak256(bytes('timeSliceTransferFrom(address,address,uint256,uint256,uint256)')));
-
-  bytes4 private constant SELECTOR1 = bytes4(keccak256(bytes('transferFrom(address,address,uint256)')));
-	
   uint256 public constant MAX_TIME = 18446744073709551615;
 
   mapping (address=> uint256) balanceOf;
-  
 
-  constructor(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) public {
+  constructor(address _token,  uint256 _rate, uint256 _depositEndTime , address _cashbox, uint256 _rewardRate, address _rewardToken, address _owner ) {
      rate = _rate;
      depositEndTime = _depositEndTime;
      token = _token;
@@ -52,29 +41,38 @@ contract Product is IProduct {
     rewardRate = _rewardRate;
   }
 
-  function deposit(address from, uint256 amount) public override { 
-
-     _safeTransfer(from, address(this), amount, block.timestamp, 666666666666);
-
+  function deposit(uint256 amount) public override {
+    //transfer token from user to this contract
+    uint256 allowance = getAllowance(token, msg.sender, address(this));
+    require(allowance >= amount, 'Product: Too less allowance for token');
+    (bool success, bytes memory data) = token.call(abi.encodeWithSelector(FULL_SELECTOR, msg.sender, address(this), amount));
+    require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: token transfer failed');
+    
+    //calculate interest
     uint256 day = (depositEndTime - block.timestamp) / (24 * 3600);
-
-    uint256 interest = getInterest(day, rate);
-
+    uint256 interest = getInterest(day);
     uint256 interestAmount = interest * amount / (10**18);
+    
+     //transfer interest from cash box address to user
+    uint256 allowance1 = getAllowance(token, cashbox, address(this));
+    require(allowance1 >= interestAmount, 'Product: Too less allowance for interest');
+    (bool success1, bytes memory data1) = token.call(abi.encodeWithSelector(SLICE_SELECTOR, cashbox, msg.sender, interestAmount, depositEndTime, MAX_TIME));
+    require(success1 && (data1.length == 0 || abi.decode(data1, (bool))), 'Product: interest transfer failed');
 
-    console.log('interestAmount', interest, interestAmount);
-
-    _safeTransfer(cashbox, from, interestAmount, depositEndTime, MAX_TIME);
-
-    if(rewardRate !=0) {
-      uint256 rewardAmount = interestAmount / rewardRate * (10**18);
-       console.log('rewardAmount', rewardAmount, cashbox, from);
-       _mintReward(cashbox, from, rewardAmount);
+    //calculate and transfer reward from cashbox to user, if supported
+	uint256 rewardAmount = 0;
+    if(rewardRate != 0) {
+       rewardAmount = interestAmount / rewardRate * (10**18);
+       if (rewardAmount > 0) {
+            uint256 allowance2 = getAllowance(rewardToken, cashbox, address(this));
+            require(allowance2 >= rewardAmount, 'Product: Too less allowance for reward');
+            (bool success2, bytes memory data2) = rewardToken.call(abi.encodeWithSelector(FULL_SELECTOR, cashbox, msg.sender, rewardAmount));
+            require(success2 && (data2.length == 0 || abi.decode(data2, (bool))), 'Product: reward transfer failed');   
+       }
     }
   }
 
-  function getInterest(uint256 day, uint256 rate) internal returns(uint256)  {
-
+  function getInterest(uint256 day) internal view returns(uint256) {
       uint256 interest = 0;
       uint256 _days = day;
       uint256 min_day = 6;
@@ -96,14 +94,12 @@ contract Product is IProduct {
       return interest;
   }
 
-  function _safeTransfer(address _from, address _to, uint value, uint256 tokenStart, uint256 tokenEnd) private {
-      (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SELECTOR, _from, _to, value, tokenStart, tokenEnd));
-      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: transfer failed');
-  }
-
-  function _mintReward(address _from, address _to, uint value) private {
-    (bool success, bytes memory data) = rewardToken.call(abi.encodeWithSelector(SELECTOR, _from, _to, value , 0 , 66666666666));
-      // console.log('reward', success);
-      require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: mint reward failed');
+  function getAllowance(address _token, address _owner, address _spender) private returns(uint256)  {
+       uint256 allowance = 0;
+       (bool success, bytes memory data) = _token.call(abi.encodeWithSelector(bytes4(keccak256(bytes('allowance(address,address)'))), _owner, _spender));
+       if (success) {
+            allowance = abi.decode(data, (uint256));
+       }
+       return allowance;
   }
 }

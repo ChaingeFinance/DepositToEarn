@@ -40,22 +40,6 @@ contract MyToken is FRC758 {
         return true;
     }
 
-    function allowance(address owner, address spender) public view returns (uint256) {
-        if(operatorApprovals[owner][spender]) {
-            return 1;
-        }
-        return 0;
-    }
-
-    function approve(address spender, uint256 amount) public returns (bool) {
-        bool _approved = false;
-        if(amount >0) {
-            _approved = true;
-        }
-        setApprovalForAll(spender, _approved);
-        return true;
-    }
-    
     function onTimeSlicedTokenReceived(address _operator, address _from, uint256 amount, uint256 newTokenStart, uint256 newTokenEnd) public pure returns(bytes4) {
         _operator = address(0);
         _from = address(0);
