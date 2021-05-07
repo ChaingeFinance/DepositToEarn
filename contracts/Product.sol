@@ -32,20 +32,20 @@ contract Product is IProduct {
   }
 
   function setRate(uint256 _rate) public override {
-     require(msg.sender == owner, 'Product: Owner required');
+     require(msg.sender == owner, 'Product: owner required');
       rate = _rate;
   }
 
   function setRewardRate(uint256 _rewardRate) public override {
-    require(msg.sender == owner, 'Product: Owner required');
+    require(msg.sender == owner, 'Product: owner required');
     rewardRate = _rewardRate;
   }
 
   function deposit(uint256 amount) public override {
     //transfer token from user to this contract
     uint256 allowance = getAllowance(token, msg.sender, address(this));
-    require(allowance >= amount, 'Product: Too less allowance for token');
-    (bool success, bytes memory data) = token.call(abi.encodeWithSelector(FULL_SELECTOR, msg.sender, address(this), amount));
+    require(allowance >= amount, 'Product: too less allowance for token');
+    (bool success, bytes memory data) = token.call(abi.encodeWithSelector(SLICE_SELECTOR, msg.sender, address(this), amount, block.timestamp, depositEndTime));
     require(success && (data.length == 0 || abi.decode(data, (bool))), 'Product: token transfer failed');
     
     //calculate interest
@@ -55,17 +55,17 @@ contract Product is IProduct {
     
      //transfer interest from cash box address to user
     uint256 allowance1 = getAllowance(token, cashbox, address(this));
-    require(allowance1 >= interestAmount, 'Product: Too less allowance for interest');
+    require(allowance1 >= interestAmount, 'Product: too less allowance for interest');
     (bool success1, bytes memory data1) = token.call(abi.encodeWithSelector(SLICE_SELECTOR, cashbox, msg.sender, interestAmount, depositEndTime, MAX_TIME));
     require(success1 && (data1.length == 0 || abi.decode(data1, (bool))), 'Product: interest transfer failed');
 
     //calculate and transfer reward from cashbox to user, if supported
 	uint256 rewardAmount = 0;
     if(rewardRate != 0) {
-       rewardAmount = interestAmount / rewardRate * (10**18);
+       rewardAmount = interestAmount * (10**18) / rewardRate;
        if (rewardAmount > 0) {
             uint256 allowance2 = getAllowance(rewardToken, cashbox, address(this));
-            require(allowance2 >= rewardAmount, 'Product: Too less allowance for reward');
+            require(allowance2 >= rewardAmount, 'Product: too less allowance for reward');
             (bool success2, bytes memory data2) = rewardToken.call(abi.encodeWithSelector(FULL_SELECTOR, cashbox, msg.sender, rewardAmount));
             require(success2 && (data2.length == 0 || abi.decode(data2, (bool))), 'Product: reward transfer failed');   
        }
